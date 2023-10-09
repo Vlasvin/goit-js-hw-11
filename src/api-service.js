@@ -5,12 +5,12 @@ const BASE_URL = 'https://pixabay.com/api/';
 export default class ApiService {
   constructor() {
     this.q = '';
-    this.page = 1;
+    this.pageIndex = 1;
   }
 
-  fetchPictures() {
-    return axios
-      .get(`${BASE_URL}`, {
+  async fetchPictures() {
+    try {
+      const response = await axios.get(BASE_URL, {
         params: {
           key: '39874943-ba671930c3dcb7d11922b6a96',
           q: this.q,
@@ -18,18 +18,19 @@ export default class ApiService {
           orientation: 'horizontal',
           safesearch: true,
           per_page: 40,
-          page: this.page,
+          page: this.pageIndex,
         },
-      })
-      .then(response => {
-        this.page += 1;
-        console.log(response.data.totalHits);
-
-        return response.data;
       });
+
+      this.pageIndex += 1;
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
+
   resetPage() {
-    this.page = 1;
+    this.pageIndex = 1;
   }
   get query() {
     return this.q;
