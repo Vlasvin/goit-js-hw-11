@@ -6,6 +6,7 @@ export default class ApiService {
   constructor() {
     this.q = '';
     this.pageIndex = 1;
+    this.perPage = 40;
   }
 
   async fetchPictures() {
@@ -17,11 +18,11 @@ export default class ApiService {
           image_type: 'photo',
           orientation: 'horizontal',
           safesearch: true,
-          per_page: 40,
+          per_page: this.perPage,
           page: this.pageIndex,
         },
       });
-
+      console.log();
       this.pageIndex += 1;
       return response.data;
     } catch (error) {

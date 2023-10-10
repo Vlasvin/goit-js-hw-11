@@ -9,11 +9,13 @@ const refs = {
   loadMore: document.querySelector('.load-more'),
 };
 
-const lightbox = new SimpleLightbox('.gallery a', {});
+const lightbox = new SimpleLightbox('.gallery a', { captionData: 'alt' });
 const apiService = new ApiService();
+let errorShown = false;
 let lastItem;
-let loaderHits = 40;
+let totalPages = 2;
 const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+let currentPage = apiService.pageIndex;
 
 scrollToTopBtn.addEventListener('click', scrollToTop);
 window.addEventListener('scroll', toggleScrollToTopBtn);
@@ -24,26 +26,31 @@ const optionsForObserver = {
   rootMargin: '0px',
   threshold: 0.1,
 };
-
 const observer = new IntersectionObserver(onLoadMore, optionsForObserver);
 
 async function onLoadMore(entries, observer) {
-  entries.forEach(entry => {
+  for (const entry of entries) {
     if (entry.isIntersecting) {
-      apiService.fetchPictures().then(data => {
-        refs.gallery.insertAdjacentHTML('beforeend', hitsMarkup(data.hits));
-        loaderHits += data.hits.length;
-        if (loaderHits >= data.totalHits) {
+      if (currentPage < totalPages) {
+        try {
+          const data = await apiService.fetchPictures();
+          refs.gallery.insertAdjacentHTML('beforeend', hitsMarkup(data.hits));
+          totalPages = Math.ceil(data.totalHits / apiService.perPage);
+          lightbox.refresh();
+          smoothScroll();
+          lastItem = document.querySelector('.photo-card:last-child');
+          observer.unobserve(entry.target);
+          currentPage += 1;
+          observer.observe(lastItem);
+        } catch (error) {}
+      } else {
+        if (!errorShown) {
           showErrorNotification();
+          errorShown = true;
         }
-        lightbox.refresh();
-        smoothScroll();
-        lastItem = document.querySelector('.photo-card:last-child');
-        observer.unobserve(entry.target);
-        observer.observe(lastItem);
-      });
+      }
     }
-  });
+  }
 }
 
 async function searchPictures(e) {
