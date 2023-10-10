@@ -28,6 +28,28 @@ const optionsForObserver = {
 };
 const observer = new IntersectionObserver(onLoadMore, optionsForObserver);
 
+async function searchPictures(e) {
+  e.preventDefault();
+  try {
+    apiService.query = e.currentTarget.elements.searchQuery.value;
+    apiService.resetPage();
+    errorShown = false;
+    const data = await apiService.fetchPictures();
+    if (data.hits[0] !== undefined && apiService.query.trim() !== '') {
+      clearGallery();
+      refs.gallery.insertAdjacentHTML('beforeend', hitsMarkup(data.hits));
+      lightbox.refresh();
+      newHitsNotification(data.totalHits);
+      infiniteScroll();
+    } else {
+      throw new Error();
+    }
+  } catch (error) {
+    clearGallery();
+    showErrorNotification('true');
+  }
+}
+
 async function onLoadMore(entries, observer) {
   for (const entry of entries) {
     if (currentPage < totalPages) {
@@ -50,27 +72,6 @@ async function onLoadMore(entries, observer) {
         errorShown = true;
       }
     }
-  }
-}
-
-async function searchPictures(e) {
-  e.preventDefault();
-  try {
-    apiService.query = e.currentTarget.elements.searchQuery.value;
-    apiService.resetPage();
-    const data = await apiService.fetchPictures();
-    if (data.hits[0] !== undefined && apiService.query.trim() !== '') {
-      clearGallery();
-      refs.gallery.insertAdjacentHTML('beforeend', hitsMarkup(data.hits));
-      lightbox.refresh();
-      newHitsNotification(data.totalHits);
-      infiniteScroll();
-    } else {
-      throw new Error();
-    }
-  } catch (error) {
-    clearGallery();
-    showErrorNotification('true');
   }
 }
 
