@@ -30,8 +30,8 @@ const observer = new IntersectionObserver(onLoadMore, optionsForObserver);
 
 async function onLoadMore(entries, observer) {
   for (const entry of entries) {
-    if (entry.isIntersecting) {
-      if (currentPage < totalPages) {
+    if (currentPage < totalPages) {
+      if (entry.isIntersecting) {
         try {
           const data = await apiService.fetchPictures();
           refs.gallery.insertAdjacentHTML('beforeend', hitsMarkup(data.hits));
@@ -43,11 +43,11 @@ async function onLoadMore(entries, observer) {
           currentPage += 1;
           observer.observe(lastItem);
         } catch (error) {}
-      } else {
-        if (!errorShown) {
-          showErrorNotification();
-          errorShown = true;
-        }
+      }
+    } else {
+      if (!errorShown) {
+        showErrorNotification();
+        errorShown = true;
       }
     }
   }
