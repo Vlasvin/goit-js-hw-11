@@ -5,7 +5,7 @@ const BASE_URL = 'https://pixabay.com/api/';
 export default class ApiService {
   constructor() {
     this.q = '';
-    this.pageIndex = 1;
+    this.page = 1;
     this.perPage = 40;
   }
 
@@ -19,19 +19,27 @@ export default class ApiService {
           orientation: 'horizontal',
           safesearch: true,
           per_page: this.perPage,
-          page: this.pageIndex,
+          page: this.page,
         },
       });
-      console.log();
-      this.pageIndex += 1;
+
+      this.incrementPage();
       return response.data;
     } catch (error) {
       throw error;
     }
   }
-
+  incrementPage() {
+    this.page += 1;
+  }
   resetPage() {
-    this.pageIndex = 1;
+    this.page = 1;
+  }
+  get p() {
+    return this.page;
+  }
+  set p(newP) {
+    this.page = newP;
   }
   get query() {
     return this.q;

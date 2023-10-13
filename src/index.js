@@ -9,13 +9,17 @@ const refs = {
   loadMore: document.querySelector('.load-more'),
 };
 
-const lightbox = new SimpleLightbox('.gallery a', { captionData: 'alt' });
 const apiService = new ApiService();
 let errorShown = false;
 let lastItem;
 let totalPages = 2;
 const scrollToTopBtn = document.getElementById('scrollToTopBtn');
-let currentPage = apiService.pageIndex;
+let currentPage = apiService.page;
+
+const lightbox = new SimpleLightbox('.gallery a', {
+  captionsData: 'alt',
+  captionPosition: 'bottom',
+});
 
 scrollToTopBtn.addEventListener('click', scrollToTop);
 window.addEventListener('scroll', toggleScrollToTopBtn);
@@ -32,9 +36,11 @@ async function searchPictures(e) {
   e.preventDefault();
   try {
     apiService.query = e.currentTarget.elements.searchQuery.value;
-    apiService.resetPage();
+    apiService.p = 1;
+    currentPage = 1;
     errorShown = false;
     const data = await apiService.fetchPictures();
+
     if (data.hits[0] !== undefined && apiService.query.trim() !== '') {
       clearGallery();
       refs.gallery.insertAdjacentHTML('beforeend', hitsMarkup(data.hits));
@@ -60,6 +66,7 @@ async function onLoadMore(entries, observer) {
           totalPages = Math.ceil(data.totalHits / apiService.perPage);
           lightbox.refresh();
           smoothScroll();
+
           lastItem = document.querySelector('.photo-card:last-child');
           observer.unobserve(entry.target);
           currentPage += 1;
