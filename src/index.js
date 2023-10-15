@@ -12,9 +12,9 @@ const refs = {
 const apiService = new ApiService();
 let errorShown = false;
 let lastItem;
-let totalPages = 2;
+let totalPages = 1;
+let currentPage = 0;
 const scrollToTopBtn = document.getElementById('scrollToTopBtn');
-let currentPage = apiService.page;
 
 const lightbox = new SimpleLightbox('.gallery a', {
   captionsData: 'alt',
@@ -30,23 +30,29 @@ const optionsForObserver = {
   rootMargin: '0px',
   threshold: 0.1,
 };
-const observer = new IntersectionObserver(onLoadMore, optionsForObserver);
 
 async function searchPictures(e) {
   e.preventDefault();
   try {
     apiService.query = e.currentTarget.elements.searchQuery.value;
     apiService.p = 1;
-    currentPage = 1;
     errorShown = false;
     const data = await apiService.fetchPictures();
 
     if (data.hits[0] !== undefined && apiService.query.trim() !== '') {
       clearGallery();
+      totalPages = Math.ceil(data.totalHits / apiService.perPage);
       refs.gallery.insertAdjacentHTML('beforeend', hitsMarkup(data.hits));
       lightbox.refresh();
       newHitsNotification(data.totalHits);
+      currentPage = 1;
       infiniteScroll();
+      if (totalPages === 1) {
+        if (!errorShown) {
+          showErrorNotification();
+          errorShown = true;
+        }
+      }
     } else {
       throw new Error();
     }
@@ -58,25 +64,29 @@ async function searchPictures(e) {
 
 async function onLoadMore(entries, observer) {
   for (const entry of entries) {
-    if (currentPage < totalPages) {
+    if (totalPages > 1) {
       if (entry.isIntersecting) {
         try {
           const data = await apiService.fetchPictures();
           refs.gallery.insertAdjacentHTML('beforeend', hitsMarkup(data.hits));
-          totalPages = Math.ceil(data.totalHits / apiService.perPage);
           lightbox.refresh();
           smoothScroll();
-
-          lastItem = document.querySelector('.photo-card:last-child');
-          observer.unobserve(entry.target);
           currentPage += 1;
-          observer.observe(lastItem);
-        } catch (error) {}
-      }
-    } else {
-      if (!errorShown) {
-        showErrorNotification();
-        errorShown = true;
+
+          if (currentPage < totalPages) {
+            lastItem = document.querySelector('.photo-card:last-child');
+            observer.unobserve(entry.target);
+            observer.observe(lastItem);
+          } else {
+            observer.unobserve(entry.target);
+            if (!errorShown) {
+              showErrorNotification();
+              errorShown = true;
+            }
+          }
+        } catch (error) {
+          console.log('error');
+        }
       }
     }
   }
@@ -165,6 +175,7 @@ function toggleScrollToTopBtn() {
   }
 }
 function infiniteScroll() {
+  const observer = new IntersectionObserver(onLoadMore, optionsForObserver);
   lastItem = document.querySelector('.photo-card:last-child');
   observer.observe(lastItem);
 }
