@@ -74,7 +74,6 @@ async function onLoadMore(entries, observer) {
           currentPage += 1;
 
           if (currentPage < totalPages) {
-            lastItem = document.querySelector('.photo-card:last-child');
             observer.unobserve(entry.target);
             observer.observe(lastItem);
           } else {
@@ -85,7 +84,7 @@ async function onLoadMore(entries, observer) {
             }
           }
         } catch (error) {
-          console.log('error');
+          console.log('error', error);
         }
       }
     }
